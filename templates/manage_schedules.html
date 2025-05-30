@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Gérer les Horaires - {{ class_.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Gérer les Horaires - {{ class_.name }}</h2>            <nav aria-label="breadcrumb">                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Tableau de Bord</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('manage_department') }}">Départements</a></li>
+                    <li class="breadcrumb-item active">Horaires pour {{ class_.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Ajouter un Nouvel Horaire</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_schedule', class_id=class_.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label for="day_of_week" class="form-label">Jour de la Semaine</label>
+                            <select class="form-select" id="day_of_week" name="day_of_week" required>
+                                <option value="0">Lundi</option>
+                                <option value="1">Mardi</option>
+                                <option value="2">Mercredi</option>
+                                <option value="3">Jeudi</option>
+                                <option value="4">Vendredi</option>
+                                <option value="5">Samedi</option>
+                                <option value="6">Dimanche</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="start_time" class="form-label">Heure de Début</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_time" class="form-label">Heure de Fin</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="room_number" class="form-label">Numéro de Salle</label>
+                            <input type="text" class="form-control" id="room_number" name="room_number" placeholder="Optionnel">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Ajouter Horaire</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Horaires Existants</h5>
+                </div>
+                <div class="card-body">
+                    {% if schedules %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Jour</th>
+                                    <th>Début</th>
+                                    <th>Fin</th>
+                                    <th>Salle</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr>
+                                    <td>
+                                        {% set days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] %}
+                                        {{ days[schedule.day_of_week] }}
+                                    </td>
+                                    <td>{{ schedule.start_time.strftime('%H:%M') }}</td>
+                                    <td>{{ schedule.end_time.strftime('%H:%M') }}</td>
+                                    <td>{{ schedule.room_number or '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('session_attendance', schedule_id=schedule.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-clipboard-check"></i> Présence
+                                        </a>
+                                        <form method="POST" action="{{ url_for('delete_schedule', schedule_id=schedule.id, class_id=class_.id) }}" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet horaire?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Aucun horaire n'a encore été défini pour ce département.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

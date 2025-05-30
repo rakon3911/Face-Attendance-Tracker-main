@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-file-alt me-2"></i> Check-In/Out Report - {{ class_.name }}
+</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar me-2"></i> Date Range</h5>
+                <a href="{{ url_for('check_inout', class_id=class_.id) }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Check-In/Out
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('check_inout_report', class_id=class_.id) }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i> Generate Report
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-export me-1"></i> Export
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('export_checkinout_report', class_id=class_.id, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d')) }}">
+                                        <i class="fas fa-file-pdf me-1 text-danger"></i> Export as PDF
+                                    </a>
+                                </li>
+                                <!-- Future export options can be added here -->
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Summary Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="card h-100 bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Total Days</h6>
+                                <h2 class="mb-0">{{ date_range|length }}</h2>
+                                <small class="text-muted">{{ start_date.strftime('%b %d') }} - {{ end_date.strftime('%b %d, %Y') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Employees</h6>
+                                <h2 class="mb-0">{{ class_.employees|length }}</h2>
+                                <small class="text-muted">In {{ class_.name }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Check-ins</h6>
+                                {% set total_check_ins = namespace(value=0) %}
+                                {% for student in students %}
+                                    {% for date in date_range %}
+                                        {% if student.id in records and date in records[student.id]['dates'] %}
+                                            {% for schedule_id, record_data in records[student.id]['dates'][date].items() %}
+                                                {% if record_data['check_in'] %}
+                                                    {% set total_check_ins.value = total_check_ins.value + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                <h2 class="text-success mb-0">{{ total_check_ins.value }}</h2>
+                                <small class="text-muted">Total for period</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Check-outs</h6>
+                                {% set total_check_outs = namespace(value=0) %}
+                                {% for student in students %}
+                                    {% for date in date_range %}
+                                        {% if student.id in records and date in records[student.id]['dates'] %}
+                                            {% for schedule_id, record_data in records[student.id]['dates'][date].items() %}
+                                                {% if record_data['check_out'] %}
+                                                    {% set total_check_outs.value = total_check_outs.value + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                <h2 class="text-warning mb-0">{{ total_check_outs.value }}</h2>
+                                <small class="text-muted">Total for period</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i> Check-In/Out Records</h5>
+                <div class="form-check form-switch text-white">
+                    <input class="form-check-input" type="checkbox" id="toggleMissingRecords" checked>
+                    <label class="form-check-label" for="toggleMissingRecords">Show Missing Records</label>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover m-0" id="reportTable">
+                        <thead>
+                            <tr class="bg-light">
+                                <th style="position: sticky; left: 0; background-color: #fff; z-index: 1;">Employee</th>
+                                <th>ID</th>
+                                {% for date in date_range %}
+                                <th class="text-center">{{ date.strftime('%a, %b %d') }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td style="position: sticky; left: 0; background-color: #fff; z-index: 1;"><strong>{{ student.full_name }}</strong></td>
+                                <td>{{ student.student_id }}</td>
+                                
+                                {% for date in date_range %}
+                                <td class="text-center">
+                                    {% if student.id in records and date in records[student.id]['dates'] %}
+                                        {% for schedule_id, record_data in records[student.id]['dates'][date].items() %}
+                                            <div class="mb-2">
+                                                <div class="small text-muted">{{ record_data['schedule'].start_time.strftime('%H:%M') }} - {{ record_data['schedule'].end_time.strftime('%H:%M') }}</div>
+                                                
+                                                {% if record_data['check_in'] %}
+                                                <div class="badge bg-success">
+                                                    <i class="fas fa-sign-in-alt me-1"></i> {{ record_data['check_in'].time.strftime('%H:%M') }}
+                                                </div>
+                                                {% else %}
+                                                <div class="badge bg-secondary missing-record">
+                                                    <i class="fas fa-sign-in-alt me-1"></i> Missing
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if record_data['check_out'] %}
+                                                <div class="badge bg-warning text-dark">
+                                                    <i class="fas fa-sign-out-alt me-1"></i> {{ record_data['check_out'].time.strftime('%H:%M') }}
+                                                </div>
+                                                {% else %}
+                                                <div class="badge bg-secondary missing-record">
+                                                    <i class="fas fa-sign-out-alt me-1"></i> Missing
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                    <span class="badge bg-light text-dark missing-record">No Records</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Legend</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    <div>
+                        <span class="badge bg-success me-1">
+                            <i class="fas fa-sign-in-alt me-1"></i> 09:00
+                        </span>
+                        <span class="small text-muted">Check-in record</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-warning text-dark me-1">
+                            <i class="fas fa-sign-out-alt me-1"></i> 17:00
+                        </span>
+                        <span class="small text-muted">Check-out record</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary me-1">
+                            <i class="fas fa-sign-in-alt me-1"></i> Missing
+                        </span>
+                        <span class="small text-muted">Missing check-in</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-secondary me-1">
+                            <i class="fas fa-sign-out-alt me-1"></i> Missing
+                        </span>
+                        <span class="small text-muted">Missing check-out</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-light text-dark me-1">No Records</span>
+                        <span class="small text-muted">No schedule for this day</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle missing records
+    const toggleMissingRecords = document.getElementById('toggleMissingRecords');
+    if (toggleMissingRecords) {
+        toggleMissingRecords.addEventListener('change', function() {
+            const missingRecords = document.querySelectorAll('.missing-record');
+            missingRecords.forEach(record => {
+                record.style.display = this.checked ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

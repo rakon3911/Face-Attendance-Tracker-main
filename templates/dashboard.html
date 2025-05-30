@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-tachometer-alt me-2"></i> Tableau de Bord
+</h1>
+
+<!-- Statistics Overview Row -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+        <div class="card dashboard-stat-card">
+            <div class="dashboard-stat-icon text-primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="dashboard-stat-number">{{ employees_count if employees_count is defined else '-' }}</div>
+            <div class="dashboard-stat-label">Employés Total</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+        <div class="card dashboard-stat-card">
+            <div class="dashboard-stat-icon text-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="dashboard-stat-number">{{ present_count if present_count is defined else '-' }}</div>
+            <div class="dashboard-stat-label">Présents Aujourd'hui</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+        <div class="card dashboard-stat-card">
+            <div class="dashboard-stat-icon text-danger">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="dashboard-stat-number">{{ absent_count if absent_count is defined else '-' }}</div>
+            <div class="dashboard-stat-label">Absents Aujourd'hui</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card dashboard-stat-card">
+            <div class="dashboard-stat-icon text-info">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="dashboard-stat-number">{{ classes|length if classes is defined else '-' }}</div>
+            <div class="dashboard-stat-label">Départements</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Réunions d'Aujourd'hui</h5>
+            </div>
+            <div class="card-body">
+                {% set current_day = now.weekday() %}
+                {% set today_schedules = [] %}
+                {% for class in classes %}
+                    {% for schedule in class.schedules %}
+                        {% if schedule.day_of_week == current_day %}
+                            {% set _ = today_schedules.append({'class': class, 'schedule': schedule}) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+                {% if today_schedules %}
+                    <div class="list-group">
+                        {% for item in today_schedules|sort(attribute='schedule.start_time') %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ item.class.name }}</h5>
+                                    <span class="badge bg-info">
+                                        {{ item.schedule.start_time.strftime('%H:%M') }} - {{ item.schedule.end_time.strftime('%H:%M') }}
+                                    </span>
+                                </div>
+                                <p class="mb-1">
+                                    {% if item.schedule.room_number %}
+                                        <i class="fas fa-door-open me-1"></i> Salle: {{ item.schedule.room_number }}
+                                    {% else %}
+                                        <i class="fas fa-question-circle me-1"></i> Salle non spécifiée
+                                    {% endif %}
+                                </p>
+                                <div class="d-flex mt-2">
+                                    <a href="{{ url_for('session_attendance', schedule_id=item.schedule.id) }}" class="btn btn-sm btn-primary me-2">
+                                        <i class="fas fa-clipboard-check"></i> Présence
+                                    </a>
+                                    <a href="{{ url_for('attendance', class_id=item.class.id) }}" class="btn btn-sm btn-success me-2">
+                                        <i class="fas fa-camera"></i> Reconnaissance Faciale
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Aucune réunion programmée pour aujourd'hui.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Départements</h5>
+                <a href="{{ url_for('manage_department') }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-plus"></i> Gérer Départements
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for class in classes %}
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ class.name }}</h5>
+                            <small><i class="fas fa-user me-1"></i> {{ employee_counts[class.id] }} employés</small>
+                        </div>
+                        <div class="d-flex mt-2">                            <a href="{{ url_for('attendance', class_id=class.id) }}" class="btn btn-sm btn-primary me-2">
+                                <i class="fas fa-camera"></i> Faire l'Appel
+                            </a>                            <a href="{{ url_for('manage_employes', class_id=class.id) }}" class="btn btn-sm btn-info me-2">
+                                <i class="fas fa-users"></i> Gérer Employés
+                            </a>
+                            <a href="{{ url_for('manage_schedules', class_id=class.id) }}" class="btn btn-sm btn-warning me-2">
+                                <i class="fas fa-calendar-alt"></i> Horaires
+                            </a>
+                            <a href="{{ url_for('export_attendance_pdf', class_id=class.id) }}" class="btn btn-sm btn-secondary me-2">
+                                <i class="fas fa-file-pdf"></i> Exporter PDF
+                            </a>
+                            <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#editModal{{ class.id }}">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ class.id }}">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not classes %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Vous n'avez pas encore de départements. Créez-en un dans la section "Gérer les Départements".
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Tendances de Présence</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% for class in classes %}
+<!-- Modal pour éditer le département -->
+<div class="modal fade" id="editModal{{ class.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ class.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel{{ class.id }}">Modifier le Département</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('edit_class', class_id=class.id) }}" id="editForm{{ class.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="edit_class_name{{ class.id }}" class="form-label">Nom du Département</label>
+                        <input type="text" class="form-control" id="edit_class_name{{ class.id }}" name="class_name" value="{{ class.name }}" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="editForm{{ class.id }}" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour supprimer le département -->
+<div class="modal fade" id="deleteModal{{ class.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ class.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ class.id }}">Confirmer la Suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer le département <strong>{{ class.name }}</strong>?</p>
+                <p class="text-danger">Attention: Cette action supprimera également toutes les données associées (employés, horaires, présences).</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('delete_class', class_id=class.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ attendance_labels | tojson }},
+            datasets: [{
+                label: 'Taux de Présence (%)',
+                data: {{ attendance_stats | tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Taux de Présence des 7 Derniers Jours'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Pourcentage (%)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Jour'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

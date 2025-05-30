@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance - Session on {{ session_date }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Attendance - {{ class_.name }}</h2>
+            <h4>Session on {{ session_date }} ({{ start_time }} - {{ end_time }})</h4>            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('manage_department') }}">Départements</a></li>
+                    <li class="breadcrumb-item active">Session - {{ class_.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Employee List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr id="student-{{ student.id }}">
+                                    <td>{{ student.student_id }}</td>
+                                    <td>{{ student.full_name }}</td>
+                                    <td>
+                                        {% if attendance_status.get(student.id) %}
+                                            {% if attendance_status[student.id].present %}
+                                                <span class="badge bg-success">Present</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Absent</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not marked</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success" onclick="markSessionAttendance({{ student.id }}, true, {{ schedule_id }})">
+                                                <i class="fas fa-check"></i> Present
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="markSessionAttendance({{ student.id }}, false, {{ schedule_id }})">
+                                                <i class="fas fa-times"></i> Absent
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Session Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Department:</strong> {{ class_.name }}</p>
+                    <p><strong>Date:</strong> {{ session_date }}</p>
+                    <p><strong>Time:</strong> {{ start_time }} - {{ end_time }}</p>
+                    <p><strong>Room:</strong> {{ room_number or 'Not specified' }}</p>
+                    <hr>
+                    <p><strong>Total employees:</strong> {{ class_.employees|length }}</p>
+                    <p><strong>Present:</strong> <span id="present-count">{{ present_count }}</span></p>
+                    <p><strong>Absent:</strong> <span id="absent-count">{{ absent_count }}</span></p>
+                    <p><strong>Not marked:</strong> <span id="unmarked-count">{{ unmarked_count }}</span></p>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('manage_schedules', class_id=class_.id) }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to schedules
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store class_id in a JavaScript variable
+    const currentClassId = {{ class_.id }};
+
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    function markSessionAttendance(studentId, present, scheduleId) {
+        fetch('/mark_session_attendance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: new URLSearchParams({
+                'student_id': studentId,
+                'class_id': currentClassId,
+                'schedule_id': scheduleId,
+                'present': present
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const studentRow = document.getElementById(`student-${studentId}`);
+                const statusCell = studentRow.querySelector('td:nth-child(3)');
+                
+                // Update status badge
+                statusCell.innerHTML = present 
+                    ? '<span class="badge bg-success">Present</span>' 
+                    : '<span class="badge bg-danger">Absent</span>';
+                
+                // Update counters
+                document.getElementById('present-count').textContent = data.present_count;
+                document.getElementById('absent-count').textContent = data.absent_count;
+                document.getElementById('unmarked-count').textContent = data.unmarked_count;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while marking attendance.');
+        });
+    }
+</script>
+{% endblock %}

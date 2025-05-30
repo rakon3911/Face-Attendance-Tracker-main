@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-building me-2"></i> Manage Departments
+</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Add a Department</h5>                <form method="POST" action="{{ url_for('create_class') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="class_name" class="form-label">Department Name</label>
+                        <input type="text" class="form-control" id="class_name" name="class_name" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Department</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Departments and Employees</h5>
+            </div>
+            <div class="card-body">
+                {% for class in classes %}
+                <div class="card mb-3 border-info">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">                        <h5 class="mb-0">
+                            {{ class.name }}
+                            <span class="badge bg-primary ms-2">{{ class.employees.count() }} Employees</span>
+                        </h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDepartmentModal{{ class.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('delete_class', class_id=class.id) }}" onsubmit="return confirm('Are you sure you want to delete this department? All associated employees and schedules will also be deleted.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card-body">                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('manage_employes_class', class_id=class.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-users me-1"></i> Manage Employees
+                            </a>
+                            <a href="{{ url_for('manage_schedules', class_id=class.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-calendar-alt me-1"></i> Manage Schedules
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Department Modal -->
+                <div class="modal fade" id="editDepartmentModal{{ class.id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title">Edit Department</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>                            <form method="POST" action="{{ url_for('edit_class', class_id=class.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="class_name{{ class.id }}" class="form-label">Department Name</label>
+                                        <input type="text" class="form-control" id="class_name{{ class.id }}" name="class_name" value="{{ class.name }}" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No departments created yet. Use the form on the left to create your first department.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

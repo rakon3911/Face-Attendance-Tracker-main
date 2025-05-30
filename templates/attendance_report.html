@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Présence - {{ class_.name }}</title>
+    <style>
+        @page {
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 1.5cm;
+        }
+        .logo {
+            max-width: 120px;
+            margin: 0 auto 10px;
+            display: block;
+        }
+        .report-title {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #333;
+            margin: 0 0 5px;
+        }
+        .company-name {
+            font-size: 16pt;
+            color: #333;
+            margin: 0 0 20px;
+        }
+        .divider {
+            border-bottom: 2px solid #3498db;
+            margin: 20px 0;
+        }
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            width: 48%;
+            border: 1px solid #e1e1e1;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .info-box h2 {
+            font-size: 14pt;
+            color: #3498db;
+            margin: 0 0 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+        .info-item {
+            margin-bottom: 8px;
+        }
+        .info-label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 140px;
+        }
+        .stats-section {
+            background-color: #f0f7ff;
+            border: 1px solid #d0e3ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+        .stats-section h2 {
+            font-size: 14pt;
+            color: #3498db;
+            margin: 0 0 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #d0e3ff;
+        }
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .stats-item {
+            width: 48%;
+        }
+        .stats-label {
+            font-weight: bold;
+            display: inline-block;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e1e1e1;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: normal;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #e1e1e1;
+        }
+        td {
+            padding: 8px 10px;
+            border: 1px solid #e1e1e1;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .center {
+            text-align: center;
+        }
+        .right {
+            text-align: right;
+        }
+        .progress-cell {
+            width: 150px;
+        }
+        .small-progress-bar {
+            height: 15px;
+            background-color: #e1e1e1;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+        .small-progress-fill {
+            height: 100%;
+            background-color: #3498db;
+        }
+        .attendance-count {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .absence-count {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+        .signature-box {
+            width: 45%;
+            text-align: center;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 50px;
+            margin-bottom: 10px;
+        }
+        .signature-title {
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+            border-top: 1px solid #e1e1e1;
+            padding-top: 10px;
+        }
+        .note {
+            font-style: italic;
+            font-size: 8pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAMAAAAOusbgAAAAtFBMVEUAAAAjIyMmJiYoKCgrKysuLi4xMTE0NDQ2NjY5OTk7Ozs+Pj5BQUFERERISEhLS0tPT09SUlJWVlZZWVlcXFxgYGBjY2NnZ2dra2tubm5ycnJ2dnZ5eXl8fHyAgICEhISIiIiLi4uPj4+Tk5OWlpaamgCcnJygoKCkpKSoqKisrKyvr6+zs7O3t7e7u7u/v7/Dw8PHx8fLy8vPz8/T09PX19fb29vf39/j4+Pn5+fr6+vv7+/z8/P7+/uYe7fGAAAABnRSTlMAAQIDBAXQ1s+SAAACb0lEQVRo3u3aa3OiMBQGYAKEJEDCHQRFvKDFqlXbbbf//4+t2k7X3U53e+mH0hPmGdDM8Dq8eDgJfpTxUPKH6Y+/qHqZ/lQmE5BiO3t6Wi7QpS6XT0+z7QjUm+UeRVHkQxjeWfGDV7tF+CIQwQZzRSgXYpkQgx0qBGYjLn2HA1ooXFHgO3EH8OXONIGrBcCbDawDfuEHwNXP+A71DdRXa6sBfTPXN1DX12vB9nfBUQ3YrArx9QvEG8eZnx6nk8lkOj3+tnO3tVMm5EfSMoDYYCnkDrcgxiVa10iDAcE5WjZTcW1XBfA8oGWnrSjwK9q2w1LwB1oX1ydRXl4iEMQOtk2HbK5hT6P7+23dhJ7bE/aHH5AxPoOeYmTM1RGf9EjxKRfPEuXl9eBW7esjE2cWnWyYLEyWiKaA6S7D6nwzzpB9ORYoB4u4QYYDYzASK1lc1x5U3bFjfQ28/HrLlYl/fM/r94XYSvDTWNGILUMsXuqPWLnAKy1JNYoRgRldZeJXEzwWCcooMmvqixnmEm5j10xnIiGmfhkRCXOJxHjvY8X2tLJtSuNeN2WrYYJN3DfXCzNt1SdT/5tNv+o8+WWEM1wmHJH6soPVV42O9jNdoRLW7TadePxTRPaS5h3yHqJb0zhP3gfUPQgdZ+oEuNFQrH0Bbs0Bfma9yt9BrL3L/0nLXZpF+J3v9B9XaIR77XJ4nrEXNDWfv28aPC3+sfiH/Xrw4/OPHWLwuMI2sXZNH1iVhnWSGKl1kSe1dhqdWmuX19patTavLfbfLzaG1Sb/AYj5mIrUF1PIAAAAAElFTkSuQmCC" alt="Logo de l'Entreprise">
+        <h1 class="report-title">Rapport de Présence</h1>
+        <h2 class="company-name">Département {{ class_.name }}</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="info-section">
+        <div class="info-box">
+            <h2>Informations du Département</h2>
+            <div class="info-item">
+                <span class="info-label">Département:</span> {{ class_.name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Nombre d'employés:</span> {{ employee_count }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Périodes planifiées:</span> {{ total_sessions }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Période:</span> Trimestre en cours
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h2>Informations du Rapport</h2>
+            <div class="info-item">
+                <span class="info-label">Responsable:</span> {{ current_user.full_name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Date d'export:</span> {{ today.strftime('%d/%m/%Y') }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Heure d'export:</span> {{ today.strftime('%H:%M') }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">ID du rapport:</span> {{ today.strftime('%Y%m%d%H%M') }}
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <h2>Résumé des Statistiques</h2>
+        <div class="stats-row">
+            <div class="stats-item">
+                <span class="stats-label">Taux de présence moyen:</span> 
+                {{ avg_attendance_rate|round(2) }}%
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Total des enregistrements:</span> {{ total_present + total_absent }}
+            </div>
+        </div>
+        <div class="stats-row">
+            <div class="stats-item">
+                <span class="stats-label">Employés avec 100% de présence:</span> 
+                {{ perfect_attendance }}
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Employés avec moins de 50% de présence:</span>
+                {{ low_attendance }}
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ avg_attendance_rate }}%;"></div>
+        </div>
+        <div class="center">{{ avg_attendance_rate|round(2) }}% taux de présence global</div>
+    </div>
+
+    <h2 style="color: #3498db; border-bottom: 1px solid #3498db; padding-bottom: 5px;">Détails de Présence des Employés</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>ID</th>
+                <th>Présent</th>
+                <th>Absent</th>
+                <th class="progress-cell">Taux de Présence</th>
+                <th>Dernière Présence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td><strong>{{ student.full_name }}</strong></td>
+                <td>{{ student.student_id }}</td>
+                <td class="center">
+                    <span class="attendance-count">{{ attendance_stats[student.id]['present'] }}</span>
+                </td>
+                <td class="center">
+                    <span class="absence-count">{{ attendance_stats[student.id]['absent'] }}</span>
+                </td>
+                <td>
+                    <div class="small-progress-bar">
+                        <div class="small-progress-fill" style="width: {{ attendance_stats[student.id]['rate'] }}%;"></div>
+                    </div>
+                    <div class="center">{{ "%.1f"|format(attendance_stats[student.id]['rate']) }}%</div>
+                </td>
+                <td class="center">
+                    {{ attendance_stats[student.id]['last_date']|default('N/A', true) }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-title">Signature du Responsable</div>
+            <div>{{ current_user.full_name }}</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-title">Tampon de l'Entreprise</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Document généré le {{ today.strftime('%d/%m/%Y à %H:%M') }}</p>
+        <p>Système de Gestion d'absence - Gestion des Présences</p>
+        <p class="note">Ce document est officiel. Toute altération le rendra invalide.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,371 @@
+/* Modern UI Theme Variables */
+:root {
+    /* Dark Theme (Default) */
+    --primary-color: #4CAF50;
+    --secondary-color: #2196F3;
+    --success-color: #4CAF50;
+    --danger-color: #F44336;
+    --warning-color: #FFC107;
+    --info-color: #00BCD4;
+    
+    /* Dark Mode Colors */
+    --dark-bg: #121212;
+    --dark-card-bg: #1e1e1e;
+    --dark-text: #f5f5f5;
+    --dark-border: #333333;
+    --dark-input-bg: #2c2c2c;
+    
+    /* Light Mode Colors */
+    --light-bg: #f8f9fa;
+    --light-card-bg: #ffffff;
+    --light-text: #212529;
+    --light-border: #dee2e6;
+    --light-input-bg: #f1f3f5;
+    
+    /* Active Theme Colors (set dynamically) */
+    --custom-bg: var(--dark-bg);
+    --custom-card-bg: var(--dark-card-bg);
+    --custom-text: var(--dark-text);
+    --custom-border: var(--dark-border);
+    --custom-input-bg: var(--dark-input-bg);
+}
+
+/* Body & General Styles */
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--custom-bg);
+    color: var(--custom-text);
+    transition: background-color 0.3s ease;
+    line-height: 1.6;
+}
+
+/* CSS Logo */
+.css-logo {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.css-logo:before {
+    content: "\f2bb"; /* Font Awesome User ID Card icon */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 20px;
+    color: white;
+}
+
+.navbar-brand:hover .css-logo {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: var(--custom-card-bg);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--custom-border);
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #43a047;
+    border-color: #43a047;
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+}
+
+/* Navbar Styles */
+.navbar {
+    padding: 0.8rem 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.logo-img {
+    height: 40px;
+    margin-right: 10px;
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover .logo-img {
+    transform: scale(1.05);
+}
+
+.logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* List Group Styles */
+.list-group-item {
+    background-color: var(--custom-card-bg);
+    border: 1px solid var(--custom-border);
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.list-group-item:hover {
+    transform: translateX(3px);
+}
+
+/* Form Controls */
+.form-control, .form-select {
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--custom-border);
+    background-color: var(--custom-input-bg);
+    color: var(--custom-text);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.25);
+}
+
+/* Attendance Recognition Effects */
+.recognition-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(76, 175, 80, 0.2);
+    animation: flash 0.5s ease-out;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+@keyframes flash {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#webcam {
+    width: 100%;
+    max-width: 640px;
+    border-radius: 12px;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.webcam-container {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.face-detection-frame {
+    position: absolute;
+    border: 3px solid var(--success-color);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+    pointer-events: none;
+    z-index: 10;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+/* Attendance Status Indicators */
+.attendance-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-present {
+    background-color: var(--success-color);
+}
+
+.status-absent {
+    background-color: var(--danger-color);
+}
+
+.status-late {
+    background-color: var(--warning-color);
+}
+
+/* Theme Toggle Button */
+#theme-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: rotate(30deg);
+}
+
+#theme-icon {
+    transition: transform 0.5s ease;
+}
+
+/* Dashboard Cards */
+.dashboard-stat-card {
+    padding: 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.dashboard-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-stat-label {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+/* Theme transition effect */
+.theme-transition {
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .dashboard-stat-icon {
+        font-size: 2rem;
+    }
+    
+    .dashboard-stat-number {
+        font-size: 1.5rem;
+    }
+}
+
+/* Apply theme-specific styles */
+[data-bs-theme='light'] {
+    --custom-bg: var(--light-bg);
+    --custom-card-bg: var(--light-card-bg);
+    --custom-text: var(--light-text);
+    --custom-border: var(--light-border);
+    --custom-input-bg: var(--light-input-bg);
+}
+
+[data-bs-theme='dark'] {
+    --custom-bg: var(--dark-bg);
+    --custom-card-bg: var(--dark-card-bg);
+    --custom-text: var(--dark-text);
+    --custom-border: var(--dark-border);
+    --custom-input-bg: var(--dark-input-bg);
+}
+
+/* Modal Fixes */
+.modal-open {
+    padding-right: 0 !important;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+    margin: 0 auto !important;
+}
+
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Prevent modal from jumping when opened */
+.modal {
+    overflow-y: hidden !important;
+}
+
+/* Prevent page shift when modal opens */
+body {
+    overflow-y: auto !important;
+}
+
+body.modal-open {
+    overflow: hidden !important;
+}

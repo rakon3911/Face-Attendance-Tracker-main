@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if not class_id %}
+<h1 class="mb-4">
+    <i class="fas fa-clock me-2"></i> Check-In/Out System
+</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i> Select Department</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for class in classes %}
+                    <a href="{{ url_for('check_inout', class_id=class.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ class.name }}</h5>
+                            {% if class_id is none %}
+                            <small class="text-muted"><i class="fas fa-user me-1"></i> {{ employee_counts[class.id] }} employés</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="fas fa-arrow-right"></i>
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<h1 class="mb-4">Check-In/Out - {{ class_.name }}</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Facial Recognition</h5>
+                <div class="form-group mb-3">
+                    <label for="scheduleSelect"><strong>Select Meeting:</strong></label>
+                    <select class="form-select" id="scheduleSelect">
+                        <option value="">-- Choose a meeting --</option>
+                        {% for schedule in schedules %}
+                        <option value="{{ schedule.id }}">{{ days_of_week[schedule.day_of_week] }} ({{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}) {% if schedule.room_number %}- Room {{ schedule.room_number }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="text-center">
+                    <div class="webcam-container position-relative">
+                        <video id="webcam" class="img-fluid rounded" autoplay></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        <div id="face-frame" class="face-detection-frame" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="mt-3 text-center d-flex justify-content-center gap-2">
+                    <button id="startCamera" class="btn btn-primary">
+                        <i class="fas fa-camera"></i> Start Camera
+                    </button>
+                    <div class="btn-group">
+                        <button id="checkInBtn" class="btn btn-success" disabled>
+                            <i class="fas fa-sign-in-alt"></i> Check In
+                        </button>
+                        <button id="checkOutBtn" class="btn btn-warning" disabled>
+                            <i class="fas fa-sign-out-alt"></i> Check Out
+                        </button>
+                    </div>
+                </div>
+                <div id="recognitionStatus" class="alert alert-info mt-3" style="display: none;">
+                    Waiting for recognition...
+                </div>
+                <div id="scheduleWarning" class="alert alert-warning mt-3" style="display: none;">
+                    Please select a meeting before starting facial recognition.
+                </div>
+                <div id="confidenceDisplay" class="alert alert-secondary mt-3" style="display: none;">
+                    <strong>Confidence Rate:</strong> <span id="confidenceValue">0</span>%
+                </div>
+                <!-- Hidden input for class ID -->
+                <input type="hidden" id="classId" value="{{ class_id }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Check-In Records</h5>
+                <div>
+                    <a href="{{ url_for('check_inout_report', class_id=class_id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-file-alt"></i> View Report
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-hover mb-0" id="check-in-table">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>ID</th>
+                                <th>Schedule</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                                {% for record in checkin_records.get(schedule.id, []) %}
+                                <tr>
+                                    <td>{{ record.employee.full_name }}</td>
+                                    <td>{{ record.employee.student_id }}</td>
+                                    <td>{{ days_of_week[schedule.day_of_week] }} ({{ schedule.start_time.strftime('%H:%M') }})</td>
+                                    <td>{{ record.time.strftime('%H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Checked In</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Check-Out Records</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-hover mb-0" id="check-out-table">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>ID</th>
+                                <th>Schedule</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                                {% for record in checkout_records.get(schedule.id, []) %}
+                                <tr>
+                                    <td>{{ record.employee.full_name }}</td>
+                                    <td>{{ record.employee.student_id }}</td>
+                                    <td>{{ days_of_week[schedule.day_of_week] }} ({{ schedule.start_time.strftime('%H:%M') }})</td>
+                                    <td>{{ record.time.strftime('%H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">Checked Out</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM elements
+    const startCameraButton = document.getElementById('startCamera');
+    const checkInButton = document.getElementById('checkInBtn');
+    const checkOutButton = document.getElementById('checkOutBtn');
+    const webcamElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('canvas');
+    const recognitionStatus = document.getElementById('recognitionStatus');
+    const classIdElement = document.getElementById('classId');
+    const confidenceDisplay = document.getElementById('confidenceDisplay');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const scheduleSelect = document.getElementById('scheduleSelect');
+    const scheduleWarning = document.getElementById('scheduleWarning');
+    const faceFrame = document.getElementById('face-frame');
+    const checkInTable = document.getElementById('check-in-table');
+    const checkOutTable = document.getElementById('check-out-table');
+
+    // Variables for camera handling
+    let stream = null;
+    let streaming = false;
+    const width = 640;
+    let height = 0;
+    
+    // Function to update button states
+    function updateButtons() {
+        const cameraActive = !!stream;
+        const scheduleSelected = scheduleSelect && scheduleSelect.value !== "";
+        
+        if (checkInButton) checkInButton.disabled = !cameraActive || !scheduleSelected;
+        if (checkOutButton) checkOutButton.disabled = !cameraActive || !scheduleSelected;
+    }
+    
+    // Function to start the camera
+    function startCamera() {
+        // If camera is already running, stop it
+        if (streaming) {
+            stopCamera();
+            startCameraButton.innerHTML = '<i class="fas fa-camera"></i> Start Camera';
+            if (faceFrame) faceFrame.style.display = 'none';
+            recognitionStatus.style.display = 'none';
+            confidenceDisplay.style.display = 'none';
+            updateButtons();
+            return;
+        }
+
+        // Start the camera
+        recognitionStatus.style.display = 'block';
+        recognitionStatus.innerText = 'Starting camera...';
+
+        navigator.mediaDevices.getUserMedia({ 
+            video: true,
+            audio: false
+        })
+        .then(function(videoStream) {
+            stream = videoStream;
+            webcamElement.srcObject = stream;
+            webcamElement.play();
+            streaming = true;
+
+            startCameraButton.innerHTML = '<i class="fas fa-stop"></i> Stop Camera';
+            startCameraButton.disabled = false;
+
+            if (faceFrame) faceFrame.style.display = 'block';
+
+            recognitionStatus.innerText = 'Camera active. Position your face for recognition.';
+            recognitionStatus.classList.remove('alert-danger');
+            recognitionStatus.classList.add('alert-info');
+
+            // Adjust canvas dimensions once the video is loaded
+            webcamElement.addEventListener('canplay', function() {
+                if (!streaming) {
+                    height = webcamElement.videoHeight / (webcamElement.videoWidth / width);
+                    webcamElement.setAttribute('width', width);
+                    webcamElement.setAttribute('height', height);
+                    canvasElement.setAttribute('width', width);
+                    canvasElement.setAttribute('height', height);
+                    streaming = true;
+                }
+            });
+            
+            updateButtons();
+        })
+        .catch(function(error) {
+            console.error('Error accessing camera:', error);
+            recognitionStatus.innerText = 'Error: Cannot access camera. ' + error.message;
+            recognitionStatus.classList.remove('alert-info');
+            recognitionStatus.classList.add('alert-danger');
+            recognitionStatus.style.display = 'block';
+            updateButtons();
+        });
+    }
+
+    // Function to stop the camera
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            webcamElement.srcObject = null;
+            stream = null;
+        }
+        streaming = false;
+        updateButtons();
+    }
+
+    // Function to capture a frame and process check-in/out
+    function captureFrame(type) {
+        if (!streaming || !stream) return;
+        
+        // Check if a schedule is selected
+        if (scheduleSelect && scheduleSelect.value === "") {
+            scheduleWarning.style.display = 'block';
+            return;
+        } else if (scheduleWarning) {
+            scheduleWarning.style.display = 'none';
+        }
+
+        const context = canvasElement.getContext('2d');
+        canvasElement.width = webcamElement.videoWidth;
+        canvasElement.height = webcamElement.videoHeight;
+
+        // Draw the current frame to the canvas
+        context.drawImage(webcamElement, 0, 0, canvasElement.width, canvasElement.height);
+
+        // Convert the canvas to base64 image
+        const imageData = canvasElement.toDataURL('image/jpeg');
+
+        // Process the check-in/out
+        processCheckInOut(scheduleSelect.value, type, imageData);
+    }
+
+    // Function to process check-in/out
+    function processCheckInOut(scheduleId, type, imageData) {
+        // Update status
+        recognitionStatus.innerText = 'Processing ' + type + '...';
+        recognitionStatus.classList.remove('alert-danger', 'alert-success');
+        recognitionStatus.classList.add('alert-info');
+        
+        // Disable the buttons during processing
+        checkInButton.disabled = true;
+        checkOutButton.disabled = true;
+        
+        // Get class ID
+        const classId = classIdElement ? classIdElement.value : null;
+        
+        if (!classId) {
+            console.error("Missing class ID");
+            recognitionStatus.innerText = "Error: Missing class ID";
+            recognitionStatus.classList.remove('alert-info');
+            recognitionStatus.classList.add('alert-danger');
+            updateButtons();
+            return;
+        }
+
+        // Send to server for processing
+        fetch("{{ url_for('process_check_inout') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                schedule_id: scheduleId,
+                class_id: classId,
+                type: type,
+                image: imageData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Successful check-in/out
+                recognitionStatus.innerHTML = `
+                    <div class="alert-heading h5">Employee recognized!</div>
+                    <div><strong>Name:</strong> ${data.employee_name}</div>
+                    <div><strong>Status:</strong> ${type === 'check-in' ? 'Checked In' : 'Checked Out'}</div>
+                `;
+                recognitionStatus.classList.remove('alert-info', 'alert-danger');
+                recognitionStatus.classList.add('alert-success');
+
+                // Create flash effect
+                createFlashEffect();
+                
+                // Add to the appropriate table
+                const tableId = type === 'check-in' ? 'check-in-table' : 'check-out-table';
+                const table = document.getElementById(tableId);
+                if (table) {
+                    const tbody = table.querySelector('tbody');
+                    const scheduleObj = getScheduleById(scheduleId);
+                    
+                    // Create new row
+                    const newRow = document.createElement('tr');
+                    newRow.classList.add('table-success'); // Highlight the new row
+                    
+                    // Create cells
+                    newRow.innerHTML = `
+                        <td>${data.employee_name}</td>
+                        <td>${data.employee_id}</td>
+                        <td>${scheduleObj ? getDayAndTime(scheduleObj) : ''}</td>
+                        <td>${data.time}</td>
+                        <td>
+                            <span class="badge ${type === 'check-in' ? 'bg-success' : 'bg-warning text-dark'}">
+                                ${type === 'check-in' ? 'Checked In' : 'Checked Out'}
+                            </span>
+                        </td>
+                    `;
+                    
+                    // Insert at the top of the table
+                    if (tbody.firstChild) {
+                        tbody.insertBefore(newRow, tbody.firstChild);
+                    } else {
+                        tbody.appendChild(newRow);
+                    }
+                    
+                    // Remove highlight after a few seconds
+                    setTimeout(() => {
+                        newRow.classList.remove('table-success');
+                    }, 5000);
+                }
+                
+                // Show notification
+                showNotification(type, data.employee_name);
+            } else {
+                // Check-in/out failed
+                recognitionStatus.innerText = data.message || 'Failed to process ' + type;
+                recognitionStatus.classList.remove('alert-info', 'alert-success');
+                recognitionStatus.classList.add('alert-danger');
+            }
+            
+            // Re-enable buttons
+            updateButtons();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            recognitionStatus.innerText = 'Error connecting to server: ' + error.message;
+            recognitionStatus.classList.remove('alert-info', 'alert-success');
+            recognitionStatus.classList.add('alert-danger');
+            updateButtons();
+        });
+    }
+    
+    // Helper function to get schedule by ID
+    function getScheduleById(scheduleId) {
+        const option = scheduleSelect.querySelector(`option[value="${scheduleId}"]`);
+        return option ? { text: option.textContent } : null;
+    }
+    
+    // Helper function to get day and time string from schedule object
+    function getDayAndTime(schedule) {
+        return schedule.text;
+    }
+    
+    // Create a flash effect when a face is recognized
+    function createFlashEffect() {
+        const flashElement = document.createElement('div');
+        flashElement.className = 'recognition-flash';
+        document.body.appendChild(flashElement);
+
+        // Remove the flash element after animation completes
+        setTimeout(() => {
+            document.body.removeChild(flashElement);
+        }, 500);
+    }
+    
+    // Show a notification
+    function showNotification(type, studentName) {
+        const notificationHTML = `
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 5000">
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header ${type === 'check-in' ? 'bg-success' : 'bg-warning'} text-white">
+                        <strong class="me-auto">${type === 'check-in' ? 'Check-In' : 'Check-Out'} Successful</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <strong>${studentName}</strong> has been ${type === 'check-in' ? 'checked in' : 'checked out'} successfully.
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const notificationContainer = document.createElement('div');
+        notificationContainer.innerHTML = notificationHTML;
+        document.body.appendChild(notificationContainer);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notificationContainer.remove();
+        }, 3000);
+    }
+
+    // Get CSRF token from meta tag
+    function getCSRFToken() {
+        const tokenElement = document.querySelector('meta[name="csrf-token"]');
+        return tokenElement ? tokenElement.getAttribute('content') : '';
+    }
+    
+    // Event listeners
+    if (startCameraButton) {
+        startCameraButton.addEventListener('click', startCamera);
+    }
+    
+    if (checkInButton) {
+        checkInButton.addEventListener('click', function() {
+            captureFrame('check-in');
+        });
+    }
+    
+    if (checkOutButton) {
+        checkOutButton.addEventListener('click', function() {
+            captureFrame('check-out');
+        });
+    }
+    
+    if (scheduleSelect) {
+        scheduleSelect.addEventListener('change', updateButtons);
+    }
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', function() {
+        stopCamera();
+    });
+});
+</script>
+{% endblock %} 

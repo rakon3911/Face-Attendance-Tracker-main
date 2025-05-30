@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Manage Managers</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Manager List</h5>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#generateCodeModal">
+                    <i class="fas fa-plus-circle"></i> Generate Invitation Code
+                </button>
+            </div>
+            <div class="card-body">
+                {% if managers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Admin</th>
+                                <th>Departments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for manager in managers %}
+                            <tr>
+                                <td>{{ manager.id }}</td>
+                                <td>{{ manager.username }}</td>
+                                <td>{{ manager.full_name }}</td>
+                                <td>{{ manager.email }}</td>
+                                <td>
+                                    {% if manager.is_admin %}
+                                    <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ manager.classes|length }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editProfessorModal{{ manager.id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if not manager.is_admin or current_user.id != manager.id %}
+                                        <form method="POST" action="{{ url_for('delete_manager', manager_id=manager.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this manager?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Edit Professor Modal -->
+                            <div class="modal fade" id="editProfessorModal{{ manager.id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-info text-white">
+                                            <h5 class="modal-title">Edit {{ manager.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('update_manager', manager_id=manager.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="full_name{{ manager.id }}" class="form-label">Full Name</label>
+                                                    <input type="text" class="form-control" id="full_name{{ manager.id }}" name="full_name" value="{{ manager.full_name }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="email{{ manager.id }}" class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="email{{ manager.id }}" name="email" value="{{ manager.email }}" required>
+                                                </div>
+                                                {% if current_user.is_admin and current_user.id != manager.id %}
+                                                <div class="mb-3 form-check">
+                                                    <input type="checkbox" class="form-check-input" id="is_admin{{ manager.id }}" name="is_admin" {% if manager.is_admin %}checked{% endif %}>
+                                                    <label class="form-check-label" for="is_admin{{ manager.id }}">Administrator</label>
+                                                </div>
+                                                {% endif %}
+                                                <div class="mb-3">
+                                                    <label for="new_password{{ manager.id }}" class="form-label">New password (leave empty to keep current)</label>
+                                                    <input type="password" class="form-control" id="new_password{{ manager.id }}" name="new_password">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Save</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">No managers registered.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Invitation Codes</h5>
+            </div>
+            <div class="card-body">
+                {% if invitation_codes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Created on</th>
+                                <th>Expires on</th>
+                                <th>Status</th>
+                                <th>Used by</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in invitation_codes %}
+                            <tr>
+                                <td><code>{{ code.code }}</code></td>
+                                <td>{{ code.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ code.expires_at.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    {% if code.is_used %}
+                                    <span class="badge bg-secondary">Used</span>
+                                    {% elif code.expires_at < now %}
+                                    <span class="badge bg-warning">Expired</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Valid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if code.used_by %}
+                                    {% set user = managers|selectattr('id', 'equalto', code.used_by)|first %}
+                                    {{ user.full_name if user else 'Unknown' }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not code.is_used and code.expires_at > now %}
+                                    <form method="POST" action="{{ url_for('delete_invitation_code', code_id=code.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this code?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">No invitation codes have been generated.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Code Modal -->
+<div class="modal fade" id="generateCodeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Generate Invitation Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('generate_invitation_code') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="expires_in" class="form-label">Expires in (days)</label>
+                        <input type="number" class="form-control" id="expires_in" name="expires_in" value="30" min="1" max="365" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Generate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fix for modal positioning issues
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all modals on the page
+        const modals = document.querySelectorAll('.modal');
+        
+        // For each modal, ensure it's properly positioned
+        modals.forEach(function(modal) {
+            modal.addEventListener('show.bs.modal', function() {
+                // Reset scroll position when modal opens
+                setTimeout(() => {
+                    const modalDialog = this.querySelector('.modal-dialog');
+                    if (modalDialog) {
+                        modalDialog.style.marginTop = '0';
+                    }
+                }, 10);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-users me-2"></i> Gérer les Employés - {{ class_.name }}
+</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i> Ajouter un Employé</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_student', class_id=class_.id) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Nom complet</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student_id" class="form-label">ID Employé</label>
+                        <input type="text" class="form-control" id="student_id" name="student_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Photo de l'employé</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
+                        <small class="text-muted">Cette photo sera utilisée pour la reconnaissance faciale</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Ajouter l'Employé
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i> Liste des Employés</h5>
+                <a href="{{ url_for('export_attendance_pdf', class_id=class_.id) }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-file-pdf"></i> Exporter PDF
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for employe in class_.employees %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ employe.full_name }}</h6>
+                                <small class="text-muted">ID: {{ employe.student_id }}</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success me-2">
+                                    Présence: {{ attendance_stats[employe.id]['rate']|round(1) }}%
+                                </span>
+                                <button class="btn btn-sm btn-info" type="button" data-bs-toggle="modal" data-bs-target="#editModal{{ employe.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal{{ employe.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not class_.employees %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Aucun employé ajouté pour le moment. Utilisez le formulaire pour ajouter des employés.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modals -->
+{% for employe in class_.employees %}
+<div class="modal fade" id="editModal{{ employe.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ employe.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="editModalLabel{{ employe.id }}">Modifier l'Employé : {{ employe.full_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_student', student_id=employe.id, class_id=class_.id) }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_full_name{{ employe.id }}" class="form-label">Nom complet</label>
+                        <input type="text" class="form-control" id="edit_full_name{{ employe.id }}" name="full_name" value="{{ employe.full_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_student_id{{ employe.id }}" class="form-label">ID Employé</label>
+                        <input type="text" class="form-control" id="edit_student_id{{ employe.id }}" name="student_id" value="{{ employe.student_id }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_photo{{ employe.id }}" class="form-label">Nouvelle photo (optionnel)</label>
+                        <input type="file" class="form-control" id="edit_photo{{ employe.id }}" name="photo" accept="image/*">
+                        <small class="text-muted">Téléchargez une nouvelle photo uniquement si vous souhaitez changer l'actuelle</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Delete Modals -->
+{% for employe in class_.employees %}
+<div class="modal fade" id="deleteModal{{ employe.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ employe.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel{{ employe.id }}">Supprimer l'Employé</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer <strong>{{ employe.full_name }}</strong> ?</p>
+                <p>Cela supprimera définitivement l'employé et tous ses enregistrements de présence.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('delete_student', student_id=employe.id, class_id=class_.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle modal issues by making sure only one can be open at a time
+    const allModals = document.querySelectorAll('.modal');
+    allModals.forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.classList.remove('modal-open');
+            const modalBackdrops = document.querySelectorAll('.modal-backdrop');
+            modalBackdrops.forEach(backdrop => {
+                backdrop.remove();
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,199 @@
+/* Corporate Theme for Face Attendance Tracker */
+
+:root {
+  --primary-color: #1E3A8A;      /* Dark blue */
+  --secondary-color: #047857;    /* Green */
+  --warning-color: #F59E0B;      /* Amber/orange */
+  --info-color: #0EA5E9;         /* Light blue */
+  --danger-color: #DC2626;       /* Red */
+  --light-color: #F3F4F6;        /* Light gray */
+  --dark-color: #1F2937;         /* Dark gray */
+  --text-color: #374151;         /* Text */
+  --light-text: #9CA3AF;         /* Light text */
+  --border-color: #E5E7EB;       /* Border */
+}
+
+/* Corporate Header */
+.navbar-brand {
+  font-weight: 600;
+  color: var(--primary-color) !important;
+}
+
+/* Corporate Main Content */
+body {
+  color: var(--text-color);
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Card styling */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: none;
+}
+
+.card-header {
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  font-weight: 600;
+}
+
+/* Button styling */
+.btn {
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-success {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-warning {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.btn-info {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #B91C1C;
+  border-color: #B91C1C;
+  color: white;
+}
+
+/* Department delete button styling */
+.btn-delete-department {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  margin-left: 0.5rem;
+  display: inline-block;
+}
+
+.btn-delete-department:hover {
+  background-color: #B91C1C;
+  border-color: #B91C1C;
+  color: white;
+}
+
+.department-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Department button group styling */
+.list-group-item .btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.list-group-item .btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.75rem;
+}
+
+/* Responsive styling for department buttons */
+@media (max-width: 768px) {
+  .list-group-item .d-flex {
+    gap: 0.5rem;
+  }
+  
+  .list-group-item .btn-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Table styling */
+.table {
+  color: var(--text-color);
+}
+
+.table thead th {
+  background-color: var(--light-color);
+  color: var(--dark-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.bg-success {
+  background-color: var(--secondary-color) !important;
+}
+
+.bg-warning {
+  background-color: var(--warning-color) !important;
+}
+
+.bg-info {
+  background-color: var(--info-color) !important;
+}
+
+.bg-danger {
+  background-color: var(--danger-color) !important;
+}
+
+/* Form styling */
+.form-control {
+  border-radius: 0.375rem;
+  border-color: var(--border-color);
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(30, 58, 138, 0.25);
+}
+
+/* Custom dashboard styling */
+.dashboard-stats-card {
+  transition: transform 0.2s;
+}
+
+.dashboard-stats-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Print styles for reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+  }
+  
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+}
